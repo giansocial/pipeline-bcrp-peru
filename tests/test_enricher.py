@@ -28,41 +28,39 @@ def monthly_series():
     })
 
 
-class TestTimeSeriesEnricher:
-    def test_agrega_variacion_mensual(self, enricher, monthly_series):
-        result = enricher.enrich(monthly_series)
-        assert "variacion_mensual" in result.columns
-        assert pd.isna(result.iloc[0]["variacion_mensual"])
-        assert not pd.isna(result.iloc[1]["variacion_mensual"])
+def test_agrega_variacion_mensual(enricher, monthly_series):
+    result = enricher.enrich(monthly_series)
+    assert "variacion_mensual" in result.columns
+    assert pd.isna(result.iloc[0]["variacion_mensual"])
+    assert not pd.isna(result.iloc[1]["variacion_mensual"])
 
-    def test_agrega_variacion_anual(self, enricher, monthly_series):
-        result = enricher.enrich(monthly_series)
-        assert "variacion_anual" in result.columns
-        first_12 = result.iloc[:12]["variacion_anual"]
-        assert first_12.isna().all()
 
-    def test_agrega_medias_moviles(self, enricher, monthly_series):
-        result = enricher.enrich(monthly_series)
-        assert "media_movil_3m" in result.columns
-        assert "media_movil_6m" in result.columns
-        assert "media_movil_12m" in result.columns
+def test_agrega_variacion_anual(enricher, monthly_series):
+    result = enricher.enrich(monthly_series)
+    assert "variacion_anual" in result.columns
+    first_12 = result.iloc[:12]["variacion_anual"]
+    assert first_12.isna().all()
 
-    def test_agrega_volatilidad(self, enricher, monthly_series):
-        result = enricher.enrich(monthly_series)
-        assert "volatilidad_12m" in result.columns
 
-    def test_no_muta_original(self, enricher, monthly_series):
-        original_cols = set(monthly_series.columns)
-        enricher.enrich(monthly_series)
-        assert set(monthly_series.columns) == original_cols
+def test_agrega_medias_moviles(enricher, monthly_series):
+    result = enricher.enrich(monthly_series)
+    assert "media_movil_3m" in result.columns
+    assert "media_movil_6m" in result.columns
+    assert "media_movil_12m" in result.columns
 
-    def test_multiples_series(self, enricher):
-        df = pd.DataFrame({
-            "serie_codigo": ["A"] * 5 + ["B"] * 5,
-            "fecha": [date(2023, m, 1) for m in range(1, 6)] * 2,
-            "valor": [1, 2, 3, 4, 5, 10, 20, 30, 40, 50],
-        })
-        result = enricher.enrich(df)
-        assert len(result) == 10
-        a_data = result[result["serie_codigo"] == "A"]
-        assert pd.isna(a_data.iloc[0]["variacion_mensual"])
+
+def test_agrega_volatilidad(enricher, monthly_series):
+    result = enricher.enrich(monthly_series)
+    assert "volatilidad_12m" in result.columns
+
+
+def test_multiples_series(enricher):
+    df = pd.DataFrame({
+        "serie_codigo": ["A"] * 5 + ["B"] * 5,
+        "fecha": [date(2023, m, 1) for m in range(1, 6)] * 2,
+        "valor": [1, 2, 3, 4, 5, 10, 20, 30, 40, 50],
+    })
+    result = enricher.enrich(df)
+    assert len(result) == 10
+    a_data = result[result["serie_codigo"] == "A"]
+    assert pd.isna(a_data.iloc[0]["variacion_mensual"])

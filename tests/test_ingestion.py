@@ -37,35 +37,38 @@ def ingestion(mock_client, tmp_path):
         yield ing
 
 
-class TestIncrementalIngestion:
-    def test_extrae_valores_validos(self, ingestion, mock_client, tmp_path):
-        with patch("src.extract.ingestion.RAW_DIR", tmp_path), \
-             patch("src.extract.ingestion.CONTROL_FILE", tmp_path / ".etl_control.json"):
-            df = ingestion.extract_series(["PN01234PM"], mode="full")
-        assert len(df) == 3
+def test_extrae_valores_validos(ingestion, mock_client, tmp_path):
+    with patch("src.extract.ingestion.RAW_DIR", tmp_path), \
+         patch("src.extract.ingestion.CONTROL_FILE", tmp_path / ".etl_control.json"):
+        df = ingestion.extract_series(["PN01234PM"], mode="full")
+    assert len(df) == 3
 
-    def test_descarta_nd(self, ingestion, mock_client, tmp_path):
-        with patch("src.extract.ingestion.RAW_DIR", tmp_path), \
-             patch("src.extract.ingestion.CONTROL_FILE", tmp_path / ".etl_control.json"):
-            df = ingestion.extract_series(["PN01234PM"], mode="full")
-        values = df["valor"].tolist()
-        assert all(isinstance(v, float) for v in values)
 
-    def test_parsea_fechas_correctamente(self, ingestion, mock_client, tmp_path):
-        with patch("src.extract.ingestion.RAW_DIR", tmp_path), \
-             patch("src.extract.ingestion.CONTROL_FILE", tmp_path / ".etl_control.json"):
-            df = ingestion.extract_series(["PN01234PM"], mode="full")
-        fechas = df["fecha"].tolist()
-        assert date(2023, 1, 1) in fechas
-        assert date(2023, 2, 1) in fechas
+def test_descarta_nd(ingestion, mock_client, tmp_path):
+    with patch("src.extract.ingestion.RAW_DIR", tmp_path), \
+         patch("src.extract.ingestion.CONTROL_FILE", tmp_path / ".etl_control.json"):
+        df = ingestion.extract_series(["PN01234PM"], mode="full")
+    values = df["valor"].tolist()
+    assert all(isinstance(v, float) for v in values)
 
-    def test_serie_no_existente(self, ingestion):
-        df = ingestion.extract_series(["FAKE_CODE"], mode="full")
-        assert df.empty
 
-    def test_respuesta_vacia(self, ingestion, mock_client, tmp_path):
-        mock_client.fetch_single_series.return_value = {}
-        with patch("src.extract.ingestion.RAW_DIR", tmp_path), \
-             patch("src.extract.ingestion.CONTROL_FILE", tmp_path / ".etl_control.json"):
-            df = ingestion.extract_series(["PN01234PM"], mode="full")
-        assert df.empty
+def test_parsea_fechas_correctamente(ingestion, mock_client, tmp_path):
+    with patch("src.extract.ingestion.RAW_DIR", tmp_path), \
+         patch("src.extract.ingestion.CONTROL_FILE", tmp_path / ".etl_control.json"):
+        df = ingestion.extract_series(["PN01234PM"], mode="full")
+    fechas = df["fecha"].tolist()
+    assert date(2023, 1, 1) in fechas
+    assert date(2023, 2, 1) in fechas
+
+
+def test_serie_no_existente(ingestion):
+    df = ingestion.extract_series(["FAKE_CODE"], mode="full")
+    assert df.empty
+
+
+def test_respuesta_vacia(ingestion, mock_client, tmp_path):
+    mock_client.fetch_single_series.return_value = {}
+    with patch("src.extract.ingestion.RAW_DIR", tmp_path), \
+         patch("src.extract.ingestion.CONTROL_FILE", tmp_path / ".etl_control.json"):
+        df = ingestion.extract_series(["PN01234PM"], mode="full")
+    assert df.empty
